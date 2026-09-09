@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using RiskFlow.Api.Models;
+using RiskFlow.Api.Exceptions;
 
 namespace RiskFlow.Api.Services;
 
@@ -67,7 +68,16 @@ public class RiskEngineClient
             request
         );
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content
+                .ReadFromJsonAsync<RiskEngineErrorResponse>();
+
+            throw new RiskEngineException(
+                (int)response.StatusCode,
+                error?.Detail ?? "Risk engine request failed."
+            );
+        }
 
         return await response.Content
             .ReadFromJsonAsync<MarketRiskAnalysisResponse>();

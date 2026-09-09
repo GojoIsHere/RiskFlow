@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RiskFlow.Api.Models;
 using RiskFlow.Api.Services;
+using RiskFlow.Api.Exceptions;
 
 namespace RiskFlow.Api.Controllers;
 
@@ -75,13 +76,27 @@ public class RiskController : ControllerBase
     public async Task<IActionResult> AnalyzeMarket(
         [FromBody] MarketRiskAnalysisRequest request)
     {
-        var result =
-            await _riskEngineClient.AnalyzeMarketAsync(request);
-
-        return Ok(new
+        try
         {
-            service = "RiskFlow API",
-            analysis = result
-        });
+            var result =
+                await _riskEngineClient.AnalyzeMarketAsync(request);
+
+            return Ok(new
+            {
+                service = "RiskFlow API",
+                analysis = result
+            });
+        }
+        catch (RiskEngineException ex)
+        {
+            return StatusCode(
+                ex.StatusCode,
+                new
+                {
+                    error = "Market data unavailable",
+                    message = ex.Message
+                }
+            );
+        }
     }
 }
