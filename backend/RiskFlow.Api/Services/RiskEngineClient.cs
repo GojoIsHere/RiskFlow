@@ -45,7 +45,35 @@ public class RiskEngineClient
         return await response.Content
             .ReadFromJsonAsync<HistoricalMetricsResponse>();
     }
+    public async Task<HistoricalRiskAnalysisResponse?> AnalyzeHistoryAsync(
+    HistoricalRiskAnalysisRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "/analyze-history",
+            request
+        );
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<HistoricalRiskAnalysisResponse>();
+    }
+
+    public async Task<MarketRiskAnalysisResponse?> AnalyzeMarketAsync(
+    MarketRiskAnalysisRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "/analyze-market",
+            request
+        );
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<MarketRiskAnalysisResponse>();
+    }
 }
+
 
 public record RiskEngineHealth(
     string Service,

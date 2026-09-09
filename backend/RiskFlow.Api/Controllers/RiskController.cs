@@ -56,4 +56,32 @@ public class RiskController : ControllerBase
             metrics = result
         });
     }
+
+    [HttpPost("analyze-history")]
+    public async Task<IActionResult> AnalyzeHistory(
+        [FromBody] HistoricalRiskAnalysisRequest request)
+    {
+        var result =
+            await _riskEngineClient.AnalyzeHistoryAsync(request);
+
+        return Ok(new
+        {
+            service = "RiskFlow API",
+            analysis = result
+        });
+    }
+
+    [HttpPost("analyze-market")]
+    public async Task<IActionResult> AnalyzeMarket(
+        [FromBody] MarketRiskAnalysisRequest request)
+    {
+        var result =
+            await _riskEngineClient.AnalyzeMarketAsync(request);
+
+        return Ok(new
+        {
+            service = "RiskFlow API",
+            analysis = result
+        });
+    }
 }

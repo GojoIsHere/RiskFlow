@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from math import sqrt
 from statistics import NormalDist
-from services.risk_calculator import calculate_returns
+from services.risk_calculator import (
+    calculate_returns,
+    calculate_var
+)
+from services.market_data import get_historical_prices
 
 app = FastAPI(
     title="RiskFlow Risk Engine",
@@ -36,9 +40,23 @@ class RiskAnalysisResponse(BaseModel):
     riskLevel: str
 
 
+class HistoricalRiskAnalysisRequest(BaseModel):
+    asset: str
+    investment: float = Field(gt=0)
+    prices: list[float]
+    confidenceLevel: float = Field(gt=0.5, lt=1)
+    timeHorizonDays: int = Field(gt=0)
 
 
-    
+
+class MarketRiskAnalysisRequest(BaseModel):
+    asset: str
+    investment: float = Field(gt=0)
+    period: str = "1y"
+    confidenceLevel: float = Field(gt=0.5, lt=1)
+    timeHorizonDays: int = Field(gt=0)
+
+
 @app.get("/")
 def root():
     return {
@@ -123,3 +141,59 @@ def analyze_risk(request: RiskAnalysisRequest):
         expectedGain=round(expected_gain, 2),
         riskLevel=risk_level
     )
+
+
+@app.post("/analyze-history")
+def analyze_history(
+    request: HistoricalRiskAnalysisRequest
+):
+    metrics = calculate_returns(request.prices)
+
+    risk = calculate_var(
+        investment=request.investment,
+        expected_return=metrics["annualizedReturn"],
+        volatility=metrics["annualizedVolatility"],
+        confidence_level=request.confidenceLevel,
+        time_horizon_days=request.timeHorizonDays
+    )
+
+    return {
+        "asset": request.asset,
+        "investment": request.investment,
+        "confidenceLevel": request.confidenceLevel,
+        "timeHorizonDays": request.timeHorizonDays,
+        "historicalMetrics": metrics,
+        "riskAnalysis": risk
+    }
+
+
+@app.post("/analyze-market")
+def analyze_market(
+    request: MarketRiskAnalysisRequest
+):
+    prices = get_historical_prices(
+        symbol=request.asset,
+        period=request.period
+    )
+
+    metrics = calculate_returns(prices)
+
+    risk = calculate_var(
+        investment=request.investment,
+        expected_return=metrics["annualizedReturn"],
+        volatility=metrics["annualizedVolatility"],
+        confidence_level=request.confidenceLevel,
+        time_horizon_days=request.timeHorizonDays
+    )
+
+    return {
+        "asset": request.asset.upper(),
+        "investment": request.investment,
+        "period": request.period,
+        "dataPoints": len(prices),
+        "latestPrice": round(prices[-1], 2),
+        "confidenceLevel": request.confidenceLevel,
+        "timeHorizonDays": request.timeHorizonDays,
+        "historicalMetrics": metrics,
+        "riskAnalysis": risk
+    }
