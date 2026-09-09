@@ -6,7 +6,13 @@ from services.risk_calculator import (
     calculate_returns,
     calculate_var
 )
-from services.market_data import get_historical_prices
+from services.market_data import (
+    get_historical_prices,
+    get_portfolio_price_history
+)
+from services.portfolio_calculator import (
+    calculate_portfolio_risk
+)
 
 app = FastAPI(
     title="RiskFlow Risk Engine",
@@ -89,6 +95,63 @@ class MarketRiskAnalysisRequest(BaseModel):
 
         return value
 
+class PortfolioAsset(BaseModel):
+    symbol: str
+    investment: float = Field(gt=0)
+
+    @field_validator("symbol")
+    @classmethod
+    def validate_symbol(cls, value: str) -> str:
+        value = value.strip().upper()
+
+        if not value:
+            raise ValueError("Symbol is required.")
+
+        return value
+
+
+class PortfolioRiskRequest(BaseModel):
+    assets: list[PortfolioAsset]
+    period: str = "1y"
+    confidenceLevel: float = Field(gt=0.5, lt=1)
+    timeHorizonDays: int = Field(gt=0)
+
+    @field_validator("assets")
+    @classmethod
+    def validate_assets(
+        cls,
+        value: list[PortfolioAsset]
+    ) -> list[PortfolioAsset]:
+
+        if len(value) < 2:
+            raise ValueError(
+                "Portfolio must contain at least two assets."
+            )
+
+        symbols = [
+            asset.symbol
+            for asset in value
+        ]
+
+        if len(symbols) != len(set(symbols)):
+            raise ValueError(
+                "Portfolio cannot contain duplicate assets."
+            )
+
+        return value
+
+    @field_validator("period")
+    @classmethod
+    def validate_period(cls, value: str) -> str:
+        value = value.strip().lower()
+
+        if value not in SUPPORTED_PERIODS:
+            raise ValueError(
+                "Period must be one of: "
+                "1mo, 3mo, 6mo, 1y, 2y, 5y."
+            )
+
+        return value
 
 @app.get("/")
 def root():
@@ -230,6 +293,66 @@ def analyze_market(
             "timeHorizonDays": request.timeHorizonDays,
             "historicalMetrics": metrics,
             "riskAnalysis": risk
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+@app.post("/analyze-portfolio")
+def analyze_portfolio(
+    request: PortfolioRiskRequest
+):
+    try:
+        symbols = [
+            asset.symbol
+            for asset in request.assets
+        ]
+
+        investments = [
+            asset.investment
+            for asset in request.assets
+        ]
+
+        prices = get_portfolio_price_history(
+            symbols=symbols,
+            period=request.period
+        )
+
+        analysis = calculate_portfolio_risk(
+            prices=prices,
+            investments=investments,
+            confidence_level=request.confidenceLevel,
+            time_horizon_days=request.timeHorizonDays
+        )
+
+        holdings = []
+
+        total_investment = sum(investments)
+
+        for asset in request.assets:
+            holdings.append({
+                "symbol": asset.symbol,
+                "investment": asset.investment,
+                "weight": round(
+                    asset.investment / total_investment,
+                    4
+                ),
+                "latestPrice": round(
+                    float(prices[asset.symbol].iloc[-1]),
+                    2
+                )
+            })
+
+        return {
+            "period": request.period,
+            "dataPoints": len(prices),
+            "confidenceLevel": request.confidenceLevel,
+            "timeHorizonDays": request.timeHorizonDays,
+            "holdings": holdings,
+            **analysis
         }
 
     except ValueError as error:

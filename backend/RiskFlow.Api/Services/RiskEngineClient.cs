@@ -118,6 +118,29 @@ public class RiskEngineClient
 
         return content;
     }
+
+    public async Task<PortfolioRiskResponse?> AnalyzePortfolioAsync(
+    PortfolioRiskRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "/analyze-portfolio",
+            request
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message =
+                await ReadErrorMessageAsync(response);
+
+            throw new RiskEngineException(
+                (int)response.StatusCode,
+                message
+            );
+        }
+
+        return await response.Content
+            .ReadFromJsonAsync<PortfolioRiskResponse>();
+    }
 }
 
 

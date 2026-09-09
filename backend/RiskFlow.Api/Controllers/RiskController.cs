@@ -99,4 +99,32 @@ public class RiskController : ControllerBase
             );
         }
     }
+
+    [HttpPost("analyze-portfolio")]
+    public async Task<IActionResult> AnalyzePortfolio(
+        [FromBody] PortfolioRiskRequest request)
+    {
+        try
+        {
+            var result =
+                await _riskEngineClient.AnalyzePortfolioAsync(request);
+
+            return Ok(new
+            {
+                service = "RiskFlow API",
+                analysis = result
+            });
+        }
+        catch (RiskEngineException ex)
+        {
+            return StatusCode(
+                ex.StatusCode,
+                new
+                {
+                    error = "Portfolio analysis failed",
+                    message = ex.Message
+                }
+            );
+        }
+    }
 }
