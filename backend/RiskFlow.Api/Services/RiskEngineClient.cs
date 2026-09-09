@@ -31,8 +31,21 @@ public class RiskEngineClient
         return await response.Content
             .ReadFromJsonAsync<RiskAnalysisResponse>();
     }
-}
 
+    public async Task<HistoricalMetricsResponse?> GetHistoricalMetricsAsync(
+        HistoricalPricesRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "/historical-metrics",
+            request
+        );
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<HistoricalMetricsResponse>();
+    }
+}
 
 public record RiskEngineHealth(
     string Service,

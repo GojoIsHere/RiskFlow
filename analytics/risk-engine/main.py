@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from math import sqrt
 from statistics import NormalDist
-
+from services.risk_calculator import calculate_returns
 
 app = FastAPI(
     title="RiskFlow Risk Engine",
@@ -20,6 +20,10 @@ class RiskAnalysisRequest(BaseModel):
     timeHorizonDays: int = Field(gt=0)
 
 
+class HistoricalPricesRequest(BaseModel):
+    prices: list[float]
+
+
 class RiskAnalysisResponse(BaseModel):
     asset: str
     investment: float
@@ -32,6 +36,9 @@ class RiskAnalysisResponse(BaseModel):
     riskLevel: str
 
 
+
+
+    
 @app.get("/")
 def root():
     return {
@@ -48,6 +55,22 @@ def health():
         "version": "0.1.0"
     }
 
+
+@app.post("/historical-metrics")
+def historical_metrics(request: HistoricalPricesRequest):
+    try:
+        metrics = calculate_returns(request.prices)
+
+        return {
+            "status": "success",
+            "data": metrics
+        }
+
+    except ValueError as error:
+        return {
+            "status": "error",
+            "message": str(error)
+        }
 
 @app.post("/analyze", response_model=RiskAnalysisResponse)
 def analyze_risk(request: RiskAnalysisRequest):

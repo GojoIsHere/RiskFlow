@@ -15,7 +15,6 @@ public class RiskController : ControllerBase
         _riskEngineClient = riskEngineClient;
     }
 
-
     [HttpGet("health")]
     public async Task<IActionResult> GetHealth()
     {
@@ -30,7 +29,6 @@ public class RiskController : ControllerBase
         });
     }
 
-
     [HttpPost("analyze")]
     public async Task<IActionResult> AnalyzeRisk(
         [FromBody] RiskAnalysisRequest request)
@@ -42,6 +40,20 @@ public class RiskController : ControllerBase
         {
             service = "RiskFlow API",
             analysis = result
+        });
+    }
+
+    [HttpPost("historical-metrics")]
+    public async Task<IActionResult> GetHistoricalMetrics(
+        [FromBody] HistoricalPricesRequest request)
+    {
+        var result =
+            await _riskEngineClient.GetHistoricalMetricsAsync(request);
+
+        return Ok(new
+        {
+            service = "RiskFlow API",
+            metrics = result
         });
     }
 }
