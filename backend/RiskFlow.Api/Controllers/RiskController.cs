@@ -127,4 +127,33 @@ public class RiskController : ControllerBase
             );
         }
     }
+
+
+    [HttpPost("simulate-portfolio")]
+    public async Task<IActionResult> SimulatePortfolio(
+        [FromBody] MonteCarloPortfolioRequest request)
+    {
+        try
+        {
+            var result =
+                await _riskEngineClient.SimulatePortfolioAsync(request);
+
+            return Ok(new
+            {
+                service = "RiskFlow API",
+                simulation = result
+            });
+        }
+        catch (RiskEngineException ex)
+        {
+            return StatusCode(
+                ex.StatusCode,
+                new
+                {
+                    error = "Portfolio simulation failed",
+                    message = ex.Message
+                }
+            );
+        }
+    }
 }

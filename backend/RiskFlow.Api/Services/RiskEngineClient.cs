@@ -141,6 +141,29 @@ public class RiskEngineClient
         return await response.Content
             .ReadFromJsonAsync<PortfolioRiskResponse>();
     }
+
+    public async Task<MonteCarloPortfolioResponse?> SimulatePortfolioAsync(
+    MonteCarloPortfolioRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "/simulate-portfolio",
+            request
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message =
+                await ReadErrorMessageAsync(response);
+
+            throw new RiskEngineException(
+                (int)response.StatusCode,
+                message
+            );
+        }
+
+        return await response.Content
+            .ReadFromJsonAsync<MonteCarloPortfolioResponse>();
+    }
 }
 
 

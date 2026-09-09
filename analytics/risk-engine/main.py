@@ -14,6 +14,10 @@ from services.portfolio_calculator import (
     calculate_portfolio_risk
 )
 
+from services.monte_carlo import (
+    run_monte_carlo_simulation
+)
+
 app = FastAPI(
     title="RiskFlow Risk Engine",
     description="Python analytics service for RiskFlow.",
@@ -152,6 +156,58 @@ class PortfolioRiskRequest(BaseModel):
             )
 
         return value
+
+
+class MonteCarloPortfolioRequest(BaseModel):
+    assets: list[PortfolioAsset]
+    period: str = "1y"
+    confidenceLevel: float = Field(gt=0.5, lt=1)
+    timeHorizonDays: int = Field(gt=0)
+    simulations: int = Field(
+        default=10000,
+        ge=1000,
+        le=50000
+    )
+    randomSeed: int | None = None
+
+    @field_validator("assets")
+    @classmethod
+    def validate_assets(
+        cls,
+        value: list[PortfolioAsset]
+    ) -> list[PortfolioAsset]:
+
+        if len(value) < 2:
+            raise ValueError(
+                "Portfolio must contain at least two assets."
+            )
+
+        symbols = [
+            asset.symbol
+            for asset in value
+        ]
+
+        if len(symbols) != len(set(symbols)):
+            raise ValueError(
+                "Portfolio cannot contain duplicate assets."
+            )
+
+        return value
+
+    @field_validator("period")
+    @classmethod
+    def validate_period(cls, value: str) -> str:
+        value = value.strip().lower()
+
+        if value not in SUPPORTED_PERIODS:
+            raise ValueError(
+                "Period must be one of: "
+                "1mo, 3mo, 6mo, 1y, 2y, 5y."
+            )
+
+        return value
+
+
 
 @app.get("/")
 def root():
@@ -358,5 +414,55 @@ def analyze_portfolio(
     except ValueError as error:
         raise HTTPException(
             status_code=404,
+            detail=str(error)
+        )
+
+
+
+@app.post("/simulate-portfolio")
+def simulate_portfolio(
+    request: MonteCarloPortfolioRequest
+):
+    try:
+        symbols = [
+            asset.symbol
+            for asset in request.assets
+        ]
+
+        investments = [
+            asset.investment
+            for asset in request.assets
+        ]
+
+        prices = get_portfolio_price_history(
+            symbols=symbols,
+            period=request.period
+        )
+
+        simulation = run_monte_carlo_simulation(
+            prices=prices,
+            investments=investments,
+            confidence_level=request.confidenceLevel,
+            time_horizon_days=request.timeHorizonDays,
+            simulations=request.simulations,
+            random_seed=request.randomSeed
+        )
+
+        return {
+            "portfolio": symbols,
+            "totalInvestment": round(
+                sum(investments),
+                2
+            ),
+            "period": request.period,
+            "dataPoints": len(prices),
+            "confidenceLevel": request.confidenceLevel,
+            "timeHorizonDays": request.timeHorizonDays,
+            "simulation": simulation
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
             detail=str(error)
         )
