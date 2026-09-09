@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RiskFlow.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f1d2f85f05d25f5d7a053aa273f61dca6d3fe109")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cbec289ec306d14492cb14db0356449e7df83ddf")]
 [assembly: System.Reflection.AssemblyProductAttribute("RiskFlow.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RiskFlow.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

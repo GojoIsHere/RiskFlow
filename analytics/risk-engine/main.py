@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from math import sqrt
 from statistics import NormalDist
 from services.risk_calculator import (
@@ -49,12 +49,45 @@ class HistoricalRiskAnalysisRequest(BaseModel):
 
 
 
+SUPPORTED_PERIODS = {
+    "1mo",
+    "3mo",
+    "6mo",
+    "1y",
+    "2y",
+    "5y"
+}
+
+
 class MarketRiskAnalysisRequest(BaseModel):
     asset: str
     investment: float = Field(gt=0)
     period: str = "1y"
     confidenceLevel: float = Field(gt=0.5, lt=1)
     timeHorizonDays: int = Field(gt=0)
+
+    @field_validator("asset")
+    @classmethod
+    def validate_asset(cls, value: str) -> str:
+        value = value.strip().upper()
+
+        if not value:
+            raise ValueError("Asset is required.")
+
+        return value
+
+    @field_validator("period")
+    @classmethod
+    def validate_period(cls, value: str) -> str:
+        value = value.strip().lower()
+
+        if value not in SUPPORTED_PERIODS:
+            raise ValueError(
+                "Period must be one of: "
+                "1mo, 3mo, 6mo, 1y, 2y, 5y."
+            )
+
+        return value
 
 
 @app.get("/")
