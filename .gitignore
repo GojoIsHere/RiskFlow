@@ -1,0 +1,16 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# .NET
+bin/
+obj/
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+.env.*

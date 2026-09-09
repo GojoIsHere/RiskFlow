@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "bgfAuwFT8M4=",
+  "success": true,
+  "projectFilePath": "/Users/sundar/Desktop/Projects/RiskFlow/backend/RiskFlow.Api/RiskFlow.Api.csproj",
+  "expectedPackageFiles": [
+    "/Users/sundar/.nuget/packages/microsoft.aspnetcore.openapi/9.0.4/microsoft.aspnetcore.openapi.9.0.4.nupkg.sha512",
+    "/Users/sundar/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}

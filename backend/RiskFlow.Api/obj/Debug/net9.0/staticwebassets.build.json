@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "STwyuYyCG2MDqaeE+jr09q+qpKCgDjIs0uJ0jDUOmIQ=",
+  "Source": "RiskFlow.Api",
+  "BasePath": "_content/RiskFlow.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
